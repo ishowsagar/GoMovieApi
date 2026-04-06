@@ -13,10 +13,22 @@ import (
 // @ accessing Store
 var MovieStore services.MovieStore
 
-// ! All Controller~Handler Functions
-func GetAllMovies(w http.ResponseWriter,r *http.Request)  {
+// storing Interface 
+type MovieMethodStore struct {
+	Store services.MovieMethodStore
+}
+//  func that returns instance of type that holds interface passin in type that implements it
+func NewMovieMethodStore(movieInterfaceImplemenationType services.MovieMethodStore) MovieMethodStore {
+	return MovieMethodStore{
+		Store: movieInterfaceImplemenationType,
+	}
+}
 
-	RetrievedMovies,err := MovieStore.Movie.GetAllMovies()
+// ! All Controller~Handler methods belongs to type MovieStore interface which have all the apu calls methods
+func (m MovieMethodStore) GetAllMovies(w http.ResponseWriter,r *http.Request)  {
+
+	// RetrievedMovies,err := MovieStore.Movie.GetAllMovies() - * before
+	RetrievedMovies,err := m.Store.GetAllMovies()
 	if err != nil {
 		fmt.Printf("failed to get all movies,Please try again later")
 		w.WriteHeader(http.StatusBadRequest)
@@ -29,7 +41,7 @@ func GetAllMovies(w http.ResponseWriter,r *http.Request)  {
 
 }
 
-func CreateMovie(w http.ResponseWriter,r *http.Request) {
+func (m MovieMethodStore) CreateMovie(w http.ResponseWriter,r *http.Request) {
 
 	// decode req.body
 	var movie services.Movie
@@ -40,7 +52,8 @@ func CreateMovie(w http.ResponseWriter,r *http.Request) {
 	}
 
 	// pass to method that creates movie ~ from decoded data into the movie struct
-	createdMovie,err := MovieStore.Movie.CreateMovie(movie)
+	// createdMovie,err := MovieStore.Movie.CreateMovie(movie) * before
+	createdMovie,err := m.Store.CreateMovie(movie)
 
 	// err handeling
 	if err !=nil {

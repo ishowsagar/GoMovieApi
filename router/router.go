@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/ishowsagar/Go/movieApi/controllers"
+	"github.com/ishowsagar/Go/movieApi/services"
 ) 
 
 func ServeRoutes() http.Handler {
@@ -39,6 +40,9 @@ func ServeRoutes() http.Handler {
 		}
 	})
 
+	// & Accessing controller methods by type that they belongs to Movie type
+	var movie services.Movie
+	controllers := controllers.NewMovieMethodStore(movie)
 
 	// @Main routes
 	router.Route("/api",func(r chi.Router){
@@ -50,3 +54,5 @@ func ServeRoutes() http.Handler {
 	//! Returning router cause this satisfies --> http.Handler interface{serve}
 	return router
 }
+
+

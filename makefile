@@ -53,3 +53,14 @@ stop :
 
 fix :
 	go mod tidy
+add :
+	git add .
+	@echo "added all the files to version change stash,uncommited yet!"
+commit : add
+	@echo "Added commit message - ${msg}"
+	@ if [ -z "${msg}" ]; then \
+	echo "Error : Please provide commit message to commit the changes to the repo."; \
+	exit 1; \
+	fi
+	@echo "commit with message : ${msg}"
+	git commit -m "${msg}" 

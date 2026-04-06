@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// @ interface ( where all methods belongs to type => movie exists here and not exposed directly)
+type MovieMethodStore interface {
+	GetAllMovies()([]*Movie,error)
+	CreateMovie(movie Movie) (*Movie,error)
+}
+
 // @ type for movie api data struct
 // $ json tags to map fields with Json data format for api via reflection package
 type Movie struct {
