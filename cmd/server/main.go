@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -48,13 +49,21 @@ func main() {
 		fmt.Printf("failed to load env file")
 	}
 
+	// & logger for flexible debugging
+	logger := slog.New(slog.NewTextHandler(os.Stdout,&slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger) //* tuning up logger to be in action
+
 	// accessing env vars for use
 	port := os.Getenv("PORT")
-	DBConnStr := os.Getenv("DB_CONN_STR")
+	DBConnStr := os.Getenv("DB_CONN_STR") 
 
 	databaseConnection,err := db.ConnectToPostgresDB(DBConnStr)
+
 	if err !=nil {
-		fmt.Printf("failed to load db connection")
+		// fmt.Printf("fmtLog : failed to engine up postgres database - %s",err)
+		slog.Warn("failed to engine up postgres database","err",err)
 	}
 	defer func(){
 		if err == nil {

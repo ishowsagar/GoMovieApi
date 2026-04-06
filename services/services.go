@@ -9,6 +9,8 @@ import (
 type MovieMethodStore interface {
 	GetAllMovies()([]*Movie,error)
 	CreateMovie(movie Movie) (*Movie,error)
+	GetMovieByID(id string)(*Movie,error)
+	DeleteMovieByID(id string) error
 }
 
 // @ type for movie api data struct
@@ -63,6 +65,37 @@ func (m Movie) GetAllMovies()([]*Movie,error) {
 	return movies,err
 }
 
+// Get single movie method
+func (m Movie) GetMovieByID(id string)(*Movie,error) {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+
+	query := `
+		Select 
+			id,name,genre,description,ratings,created_at,updated_at
+		from
+			 movies
+		where 
+			id=$1
+	`
+
+	var movie Movie // stores & populate resulting row fields into this
+	row := db.QueryRowContext(ctx,query,id)
+	err := row.Scan(
+		&movie.ID,
+		&movie.Name,
+		&movie.Genre,
+		&movie.Description,
+		&movie.Ratings,
+		&movie.CreatedAt,
+		&movie.UpdatedAt,
+	)
+	if err !=nil {
+		return nil,err
+	}
+	return &movie,err
+}
+
 // Create movie method
 func (m Movie) CreateMovie(movie Movie) (*Movie,error) {
 	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
@@ -88,4 +121,56 @@ func (m Movie) CreateMovie(movie Movie) (*Movie,error) {
 	}
 	// if successfull query within context, return what create in the db
 	return &movie,nil
+}
+
+// update movie with passed id and body containing payload
+func (m Movie) UpdateMovieByID(id string,moviePayload Movie) error {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+	
+	query := `
+		Update 
+			movies
+		set 
+			name=$1,
+			genre=$2,
+			description=$3,
+			ratings=$4,
+			updated_at=$5,
+		where
+			id=$6
+	`
+
+	_,err := db.ExecContext(ctx,query,
+		moviePayload.Name,
+		moviePayload.Genre,
+		moviePayload.Description,
+		moviePayload.Ratings,
+		time.Now(),
+		id,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+func (m Movie) DeleteMovieByID(id string) error {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+
+	query := `
+		delete 
+			from
+				movies
+			where 
+				id=$1
+	`
+
+	_,err := db.ExecContext(ctx,query,id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

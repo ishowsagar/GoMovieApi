@@ -48,7 +48,10 @@ func ServeRoutes() http.Handler {
 	router.Route("/api",func(r chi.Router){
 		// all routes defined below has parent route path "/api". For ex --> api/whateverRoutePath defined in below routes
 		r.Get("/movies/all",controllers.GetAllMovies)
+		r.Get("/movies/movie/{id}",controllers.GetMovieByID) //* urlParam is read when ending slug is in format of /{slug}
 		r.Post("/movie/create",controllers.CreateMovie)
+		r.Put("/movies/movie/update/{id}",controllers.UpdateMovieByID)
+		r.Delete("/movies/movie/delete/{id}",controllers.DeleteMovieByID)
 	})
 
 	//! Returning router cause this satisfies --> http.Handler interface{serve}
