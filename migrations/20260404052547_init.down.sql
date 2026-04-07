@@ -1,2 +1,3 @@
--- Add down migration script here
-DROP TABLE IF NOT EXISTS movies;
+DROP TABLE IF EXISTS tokens;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS movies;

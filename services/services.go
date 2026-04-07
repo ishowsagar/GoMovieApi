@@ -11,6 +11,7 @@ type MovieMethodStore interface {
 	CreateMovie(movie Movie) (*Movie,error)
 	GetMovieByID(id string)(*Movie,error)
 	DeleteMovieByID(id string) error
+	DeleteAllMovies() error
 }
 
 // @ type for movie api data struct
@@ -174,3 +175,19 @@ func (m Movie) DeleteMovieByID(id string) error {
 	}
 	return nil
 }
+
+func (m Movie) DeleteAllMovies() error {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+
+	query := `
+		delete from movies
+	`
+
+	_,err := db.ExecContext(ctx,query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+

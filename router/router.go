@@ -9,9 +9,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/ishowsagar/Go/movieApi/controllers"
 	"github.com/ishowsagar/Go/movieApi/services"
-) 
+)
 
-func ServeRoutes() http.Handler {
+// @ this function serves route and has access to Application which stores db Conn
+func ServeRoutes(th *services.TokenHandler,uh *services.UserHandler) http.Handler {
 	router := chi.NewRouter()
 
 	// * Configuring router to have mw & enabled access to domains N meths
@@ -24,7 +25,6 @@ func ServeRoutes() http.Handler {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
-
 
 	// * Health check route to check Standard Go App is running or not
 	router.Get("/health",func(w http.ResponseWriter,r *http.Request) {
@@ -47,15 +47,21 @@ func ServeRoutes() http.Handler {
 	// @Main routes
 	router.Route("/api",func(r chi.Router){
 		// all routes defined below has parent route path "/api". For ex --> api/whateverRoutePath defined in below routes
+		// tokenStore :=  
+		// userStore :=
+		// tokenHandler := services.NewTokenHandler()
+
+		//! Protected Routes
+		r.Post("/users/register",uh.HandleRegisterUser)
+		r.Post("/tokens/authentication",th.HandleCreateToken)
 		r.Get("/movies/all",controllers.GetAllMovies)
 		r.Get("/movies/movie/{id}",controllers.GetMovieByID) //* urlParam is read when ending slug is in format of /{slug}
 		r.Post("/movie/create",controllers.CreateMovie)
 		r.Put("/movies/movie/update/{id}",controllers.UpdateMovieByID)
 		r.Delete("/movies/movie/delete/{id}",controllers.DeleteMovieByID)
+		r.Delete("/movies/all/delete",controllers.DeleteAllMovies)
 	})
 
 	//! Returning router cause this satisfies --> http.Handler interface{serve}
 	return router
 }
-
-

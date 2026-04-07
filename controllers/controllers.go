@@ -4,6 +4,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -51,6 +52,20 @@ func (m MovieMethodStore) CreateMovie(w http.ResponseWriter,r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&movie) //reflection does the population work under the hood to examine json struct tags & populate data 
 	if err !=nil {
 		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"unexpected error occurred, please send correct movie format data!"})
+		return
+	}
+	switch {
+	case movie.Name == "" :
+		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"failed to update movie, name field is mandatory!"})
+		return
+	case movie.Genre == "" :
+		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"failed to update movie, genre field is mandatory!"})
+		return
+	case movie.Description == "" :
+		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"failed to update movie, description field is mandatory!"})
+		return
+	case movie.Ratings == 0.0 :
+		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"failed to update movie, ratings field is mandatory!"})
 		return
 	}
 
@@ -144,4 +159,17 @@ func (m MovieMethodStore) DeleteMovieByID(w http.ResponseWriter,r *http.Request)
 	}
 
 	utils.WriteJson(w,http.StatusAccepted,utils.Envelop{"status" : "successfully deleted movie."})
+}
+
+// delete all movies from the database
+func (m MovieMethodStore) DeleteAllMovies(w http.ResponseWriter,r *http.Request) {
+
+	err := m.Store.DeleteAllMovies()
+	if err != nil {
+		log.Fatalf("failed to delete all movies - %s",err)
+		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"failed to delete all movies, unexpected error occured"})
+		return
+	}
+	// query being successfull
+	utils.WriteJson(w,http.StatusAccepted,utils.Envelop{"status": "Wiped all movies data from the database"})
 }
