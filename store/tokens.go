@@ -52,6 +52,7 @@ func (t *DbTokenStore) InsertToken (tokenPayload *tokens.Token) error {
 	defer cancel()
 
 	// todo -> need to create token table from migrations sqlx
+	// fixed - added token table
 	query := `
 		Insert into 
 			tokens(hash,user_id,scope,expiry)

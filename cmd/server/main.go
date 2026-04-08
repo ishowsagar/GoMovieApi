@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/ishowsagar/Go/movieApi/db"
+	mw "github.com/ishowsagar/Go/movieApi/middleware"
 	"github.com/ishowsagar/Go/movieApi/router"
 	"github.com/ishowsagar/Go/movieApi/services"
 	"github.com/ishowsagar/Go/movieApi/store"
@@ -22,6 +23,7 @@ type Application struct {
 	MovieStore services.MovieStore
 	TokenHandler *services.TokenHandler
 	UserHandler *services.UserHandler
+	MiddleWare mw.UserMiddleware
 }
 type config struct {
 	PORT string
@@ -30,7 +32,7 @@ type config struct {
 // @ Imp utils inventory 
 
 func(a *Application) IntializeServer() error {
-	chiRouter := router.ServeRoutes(a.TokenHandler,a.UserHandler)
+	chiRouter := router.ServeRoutes(a.TokenHandler,a.UserHandler,a.MiddleWare)
 	server := &http.Server{
 		Addr: fmt.Sprintf(":%s",a.Config.PORT),
 		ReadTimeout: 4 * time.Second,
@@ -76,6 +78,7 @@ func main() {
 	TokenStore := store.NewDbTokenStore(databaseConnection.Db)
 	TokenHandler := services.NewTokenHandler(UserStore,TokenStore)
 	UserHandler := services.NewUserHandler(UserStore)
+	MiddleWareHandler := mw.UserMiddleware{UserStore: *UserStore}
 
 	defer func(){
 		if err == nil {
@@ -96,6 +99,7 @@ func main() {
 		MovieStore : services.SupplyDbConnectionToAPI(databaseConnection.Db),//& instansiates the model struct and this fnc also assigns passed dbConnection.db stored from db type returned from db func to the db var (now holds the actual db connection) used by api
 		TokenHandler: TokenHandler,
 		UserHandler: UserHandler,
+		MiddleWare: MiddleWareHandler,
 	}
 
 	err = app.IntializeServer()

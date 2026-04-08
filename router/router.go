@@ -8,11 +8,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/ishowsagar/Go/movieApi/controllers"
+	mw "github.com/ishowsagar/Go/movieApi/middleware"
 	"github.com/ishowsagar/Go/movieApi/services"
 )
 
 // @ this function serves route and has access to Application which stores db Conn
-func ServeRoutes(th *services.TokenHandler,uh *services.UserHandler) http.Handler {
+func ServeRoutes(th *services.TokenHandler,uh *services.UserHandler,mw mw.UserMiddleware) http.Handler {
 	router := chi.NewRouter()
 
 	// * Configuring router to have mw & enabled access to domains N meths
@@ -51,15 +52,17 @@ func ServeRoutes(th *services.TokenHandler,uh *services.UserHandler) http.Handle
 		// userStore :=
 		// tokenHandler := services.NewTokenHandler()
 
+		// @ Chaining router with mw calls to let them use it
+		r.Use(mw.Authenticate)
 		//! Protected Routes
 		r.Post("/users/register",uh.HandleRegisterUser)
 		r.Post("/tokens/authentication",th.HandleCreateToken)
-		r.Get("/movies/all",controllers.GetAllMovies)
-		r.Get("/movies/movie/{id}",controllers.GetMovieByID) //* urlParam is read when ending slug is in format of /{slug}
-		r.Post("/movie/create",controllers.CreateMovie)
-		r.Put("/movies/movie/update/{id}",controllers.UpdateMovieByID)
-		r.Delete("/movies/movie/delete/{id}",controllers.DeleteMovieByID)
-		r.Delete("/movies/all/delete",controllers.DeleteAllMovies)
+		r.Get("/movies/all",mw.RequiresAuthorization(controllers.GetAllMovies))
+		r.Get("/movies/movie/{id}", mw.RequiresAuthorization(controllers.GetMovieByID)) //* urlParam is read when ending slug is in format of /{slug}
+		r.Post("/movie/create",mw.RequiresAuthorization(controllers.CreateMovie))
+		r.Put("/movies/movie/update/{id}",mw.RequiresAuthorization(controllers.UpdateMovieByID))
+		r.Delete("/movies/movie/delete/{id}",mw.RequiresAuthorization(controllers.DeleteMovieByID))
+		r.Delete("/movies/all/delete",mw.RequiresAuthorization(controllers.DeleteAllMovies))
 	})
 
 	//! Returning router cause this satisfies --> http.Handler interface{serve}

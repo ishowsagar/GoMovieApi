@@ -81,9 +81,9 @@ func NewDbUserStore(db  *sql.DB) *DbUserStore {
 	}
 }
 
-var anonyUser = &User{} // checks if incoming client is anon user or auth user
+var AnonyUser = &User{} // checks if incoming client is anon user or auth user
 func ( u *User) CheckUser() bool {
-	return u == anonyUser
+	return u == AnonyUser
 }
 
 // create user
@@ -103,7 +103,7 @@ func (d *DbUserStore) CreateUser(userPayload *User) (error) {
 
 	res := d.Db.QueryRowContext(ctx,query,userPayload.Username,userPayload.Email,userPayload.PasswordHash.Hash,userPayload.Bio)
 
-	// pupulate fields into pointer user payload giving back to userPayload
+	// as we are returning three fields from the query --> scanning res into these fields to access them
 	err := res.Scan(
 		&userPayload.Id,
 		&userPayload.CreatedAt,
@@ -136,7 +136,7 @@ func (d *DbUserStore) GetUserByUsername(username string) (*User,error) {
 	var passwordHash []byte
 
 	err := d.Db.QueryRowContext(ctx,query,username).Scan(
-		//! populating the resulting row into the user instance we have created 
+		//! populating the resulting row into the user instance we would've created ( pointer so changes if we get emoty instance) 
 		&user.Id,
 		&user.Username,
 		&user.Email,
