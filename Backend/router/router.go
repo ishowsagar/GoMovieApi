@@ -53,16 +53,26 @@ func ServeRoutes(th *services.TokenHandler,mw mw.UserMiddleware,usrHandlerIfaceS
 		// tokenHandler := services.NewTokenHandler()
 
 		// @ Chaining router with mw calls to let them use it
-		r.Use(mw.Authenticate)
-		//! Protected Routes
+		// r.Use(mw.Authenticate) // uncomment to use auth for protection enabled
+		//! Protected Routes (incomment to check when login/signup is implemented)
+		// r.Post("/users/register",usrHandlerIfaceStore.UserHandlerIface.HandleRegisterUser)
+		// r.Post("/tokens/authentication",th.HandleCreateToken)
+		// r.Get("/movies/all",mw.RequiresAuthorization(controllers.GetAllMovies))
+		// r.Get("/movies/movie/{id}", mw.RequiresAuthorization(controllers.GetMovieByID)) //* urlParam is read when ending slug is in format of /{slug}
+		// r.Post("/movie/create",mw.RequiresAuthorization(controllers.CreateMovie))
+		// r.Put("/movies/movie/update/{id}",mw.RequiresAuthorization(controllers.UpdateMovieByID))
+		// r.Delete("/movies/movie/delete/{id}",mw.RequiresAuthorization(controllers.DeleteMovieByID))
+		// r.Delete("/movies/all/delete",mw.RequiresAuthorization(controllers.DeleteAllMovies))
+	
 		r.Post("/users/register",usrHandlerIfaceStore.UserHandlerIface.HandleRegisterUser)
 		r.Post("/tokens/authentication",th.HandleCreateToken)
-		r.Get("/movies/all",mw.RequiresAuthorization(controllers.GetAllMovies))
-		r.Get("/movies/movie/{id}", mw.RequiresAuthorization(controllers.GetMovieByID)) //* urlParam is read when ending slug is in format of /{slug}
-		r.Post("/movie/create",mw.RequiresAuthorization(controllers.CreateMovie))
-		r.Put("/movies/movie/update/{id}",mw.RequiresAuthorization(controllers.UpdateMovieByID))
-		r.Delete("/movies/movie/delete/{id}",mw.RequiresAuthorization(controllers.DeleteMovieByID))
-		r.Delete("/movies/all/delete",mw.RequiresAuthorization(controllers.DeleteAllMovies))
+		r.Get("/movies/all",controllers.GetAllMovies)
+		r.Get("/movies/movie/{id}", controllers.GetMovieByID) //* urlParam is read when ending slug is in format of /{slug}
+		r.Post("/movie/create",controllers.CreateMovie)
+		r.Put("/movies/movie/update/{id}",controllers.UpdateMovieByID)
+		r.Delete("/movies/movie/delete/{id}",controllers.DeleteMovieByID)
+		r.Delete("/movies/all/delete",controllers.DeleteAllMovies)
+		
 	})
 
 	//! Returning router cause this satisfies --> http.Handler interface{serve}
