@@ -19,6 +19,7 @@ import (
 // @Types declarations
 // whatever needs in application method would be recieved through pointer instance
 type Application struct {
+	Logger *slog.Logger
 	Config config
 	MovieStore services.MovieStore
 	TokenHandler *services.TokenHandler
@@ -61,7 +62,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout,&slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	slog.SetDefault(logger) //* tuning up logger to be in action
+	slog.SetDefault(logger) //* tuning up logger to be in action as in Globally accessible state
 
 	// accessing env vars for use
 	port := os.Getenv("PORT")
@@ -75,14 +76,15 @@ func main() {
 		return
 	}
 
+	// !remember => when you need to pass something,you could to everywhere via paramter lik we are passing Logger
 	
 	//@ enabling stores into action by providing'em db conn --> consumed by router
 	UserStore := store.NewDbUserStore(databaseConnection.Db)
 	TokenStore := store.NewDbTokenStore(databaseConnection.Db)
-	TokenHandler := services.NewTokenHandler(UserStore,TokenStore)
-	UserHandler := services.NewUserHandler(UserStore)
+	TokenHandler := services.NewTokenHandler(UserStore,TokenStore,logger)
+	UserHandler := services.NewUserHandler(UserStore,logger)
 	UserHandlerInterface := services.UserHandlerInterfaceStore{UserHandlerIface: UserHandler}
-	MiddleWareHandler := mw.UserMiddleware{UserStore: *UserStore}
+	MiddleWareHandler := mw.UserMiddleware{UserStore: *UserStore,Logger: logger}
 
 	defer func(){
 		if err == nil {
@@ -104,10 +106,12 @@ func main() {
 		TokenHandler: TokenHandler,
 		MiddleWare: MiddleWareHandler,
 		UserHandlerInterface: UserHandlerInterface,
+		Logger: logger,
 	}
 
 	err = app.IntializeServer()
 	if err !=nil {
+		logger.Error("server error","err","failed to fuel up the server")
 		fmt.Printf("failed to start server")
 		return
 	}

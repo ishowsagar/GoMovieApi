@@ -2,6 +2,7 @@ package mw
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 // types declaration
 type UserMiddleware struct {
 	UserStore store.DbUserStore
+	Logger *slog.Logger
 }
 
 const userContextKey string= "user"
@@ -46,6 +48,7 @@ func (usrmw *UserMiddleware) Authenticate(next http.Handler) http.Handler {
 		
 		// validate if there is header coming or not ~ deal w/ it
 		if extractedHeader == "" {
+			usrmw.Logger.Warn("unexpected error occurred","error","user must be logged in")
 			// set Header with user context attached via fnc as anon user with missing user ctx
 			r = SetUser(store.AnonyUser,r) //* label as anony user if user is missing from ctx
 			//must call next to fulfil return type and prupose of mw fnc
@@ -55,6 +58,7 @@ func (usrmw *UserMiddleware) Authenticate(next http.Handler) http.Handler {
 
 		splitedHeader := strings.Split(extractedHeader," ")
 		if len(splitedHeader) != 2 || splitedHeader[0] != "Bearer" {
+			usrmw.Logger.Error("unexpected error occurred","error","invalid headers")
 			// err handeling
 			utils.WriteJson(w,http.StatusUnauthorized,utils.Envelop{"error":"invalid authorization header"})
 			return
@@ -67,10 +71,12 @@ func (usrmw *UserMiddleware) Authenticate(next http.Handler) http.Handler {
 		user,err := usrmw.UserStore.GetUserToken(tokens.ScopeAuthForTokensScope,token) //* finds that entry which is in users and token table with user_id ref id
 		// multi different types of err checks
 		if err != nil {
+			usrmw.Logger.Error("unexpected error occurred","error",err)
 			utils.WriteJson(w,http.StatusUnauthorized,utils.Envelop{"error":"invalid token or expired"})
 			return
 		}
 		if user == nil {
+			usrmw.Logger.Error("unexpected error occurred","error","user's token is either expired or invalid")
 			utils.WriteJson(w,http.StatusUnauthorized,utils.Envelop{"error":"invalid token or expired"})
 			return
 		}
@@ -91,6 +97,7 @@ func (usrmw *UserMiddleware) RequiresAuthorization(next http.HandlerFunc) http.H
 
 		// checks if user is anonymouse or not
 		if user.CheckUser() {
+			usrmw.Logger.Error("unexpected error occurred","error","user must be logged in")
 			// if user is anon as user is not returned from getUser fnc that retireves user from its ctx
 			utils.WriteJson(w,http.StatusUnauthorized,utils.Envelop{"error" : "you must be logged in to view this page!."})
 			return

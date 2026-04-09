@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"regexp"
 
@@ -28,6 +29,7 @@ type UserHandlerInterface interface {
 
 type UserHandler struct {
 	userStore store.UserStore //* database operations for users
+	Logger *slog.Logger
 }
 
 //& type that stores interface of type UserHandler which has methods belongs to it 
@@ -37,9 +39,10 @@ type UserHandler struct {
 
 
 //! NewUserHandler --> constructor that creates user handler instance
-func NewUserHandler(userStore store.UserStore) *UserHandler {
+func NewUserHandler(userStore store.UserStore,logger *slog.Logger) *UserHandler {
 	return &UserHandler{
 		userStore: userStore,
+		Logger: logger,
 	}
 }
 
@@ -48,18 +51,22 @@ func NewUserHandler(userStore store.UserStore) *UserHandler {
 func (h *UserHandler) ValidateUserRegisterRequest (regUser *registerUserRequest) error {
 	//* checking if username is provided
 	if regUser.Username == "" {
+		h.Logger.Error("unexpected error occurred","error","must have a username")
 		return errors.New("username is required")
 	}
-
+	
 	if len(regUser.Username) > 50 {
+		h.Logger.Error("unexpected error occurred","error","username length surpassing 50 characters")
 		return errors.New("username cannot be greater than 50 characters")
 	}
 
 	if regUser.Email == "" {
+		h.Logger.Error("unexpected error occurred","error","must have a email")
 		return errors.New("email is required")
 	}
 	
 	if regUser.Password == "" {
+		h.Logger.Error("unexpected error occurred","error","password cannot be empty")
 		return errors.New("password is required")
 	}
 
@@ -67,7 +74,8 @@ func (h *UserHandler) ValidateUserRegisterRequest (regUser *registerUserRequest)
 	emailRegexPattern := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	if !emailRegexPattern.MatchString(regUser.Email)  {
 		//* test if email matches standard email pattern
-		return errors.New("Invalid email format")
+		h.Logger.Error("unexpected error occurred","error","wrong email format,check your email address")
+		return errors.New("Invalid email Xformat")
 	} 
 
 	return nil
