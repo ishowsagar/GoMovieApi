@@ -22,8 +22,9 @@ type Application struct {
 	Config config
 	MovieStore services.MovieStore
 	TokenHandler *services.TokenHandler
-	UserHandler *services.UserHandler
+	// UserHandler *services.UserHandler
 	MiddleWare mw.UserMiddleware
+	UserHandlerInterface services.UserHandlerInterfaceStore
 }
 type config struct {
 	PORT string
@@ -32,7 +33,7 @@ type config struct {
 // @ Imp utils inventory 
 
 func(a *Application) IntializeServer() error {
-	chiRouter := router.ServeRoutes(a.TokenHandler,a.UserHandler,a.MiddleWare)
+	chiRouter := router.ServeRoutes(a.TokenHandler,a.MiddleWare,a.UserHandlerInterface)
 	server := &http.Server{
 		Addr: fmt.Sprintf(":%s",a.Config.PORT),
 		ReadTimeout: 4 * time.Second,
@@ -73,11 +74,14 @@ func main() {
 		slog.Warn("failed to engine up postgres database","err",err)
 		return
 	}
+
+	
 	//@ enabling stores into action by providing'em db conn --> consumed by router
 	UserStore := store.NewDbUserStore(databaseConnection.Db)
 	TokenStore := store.NewDbTokenStore(databaseConnection.Db)
 	TokenHandler := services.NewTokenHandler(UserStore,TokenStore)
 	UserHandler := services.NewUserHandler(UserStore)
+	UserHandlerInterface := services.UserHandlerInterfaceStore{UserHandlerIface: UserHandler}
 	MiddleWareHandler := mw.UserMiddleware{UserStore: *UserStore}
 
 	defer func(){
@@ -98,8 +102,8 @@ func main() {
 		},
 		MovieStore : services.SupplyDbConnectionToAPI(databaseConnection.Db),//& instansiates the model struct and this fnc also assigns passed dbConnection.db stored from db type returned from db func to the db var (now holds the actual db connection) used by api
 		TokenHandler: TokenHandler,
-		UserHandler: UserHandler,
 		MiddleWare: MiddleWareHandler,
+		UserHandlerInterface: UserHandlerInterface,
 	}
 
 	err = app.IntializeServer()

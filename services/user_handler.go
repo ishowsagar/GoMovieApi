@@ -19,9 +19,22 @@ type registerUserRequest struct {
 	Bio      string `json:"bio"` //* optional user bio
 }
 
+// @ interace where all methods belonsgs to type -> UserHandler that implements it
+type UserHandlerInterface interface {
+	ValidateUserRegisterRequest (regUser *registerUserRequest) error
+	HandleRegisterUser(w http.ResponseWriter, req *http.Request)
+
+}
+
 type UserHandler struct {
 	userStore store.UserStore //* database operations for users
 }
+
+//& type that stores interface of type UserHandler which has methods belongs to it 
+	type UserHandlerInterfaceStore struct {
+		UserHandlerIface UserHandlerInterface
+	}
+
 
 //! NewUserHandler --> constructor that creates user handler instance
 func NewUserHandler(userStore store.UserStore) *UserHandler {
@@ -32,7 +45,7 @@ func NewUserHandler(userStore store.UserStore) *UserHandler {
 
 //! validateUserRegisterRequest --> server-side validation before saving to database
 //? prevents invalid data from entering the system
-func (h *UserHandler) validateUserRegisterRequest (regUser *registerUserRequest) error {
+func (h *UserHandler) ValidateUserRegisterRequest (regUser *registerUserRequest) error {
 	//* checking if username is provided
 	if regUser.Username == "" {
 		return errors.New("username is required")
@@ -72,7 +85,7 @@ func (h *UserHandler) HandleRegisterUser(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	err = h.validateUserRegisterRequest(&r)
+	err = h.ValidateUserRegisterRequest(&r)
 	if err != nil {
 		utils.WriteJson(w, http.StatusBadRequest, utils.Envelop{"error": err.Error()})
 		return

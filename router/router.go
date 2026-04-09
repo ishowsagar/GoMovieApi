@@ -13,7 +13,7 @@ import (
 )
 
 // @ this function serves route and has access to Application which stores db Conn
-func ServeRoutes(th *services.TokenHandler,uh *services.UserHandler,mw mw.UserMiddleware) http.Handler {
+func ServeRoutes(th *services.TokenHandler,mw mw.UserMiddleware,usrHandlerIfaceStore services.UserHandlerInterfaceStore ) http.Handler {
 	router := chi.NewRouter()
 
 	// * Configuring router to have mw & enabled access to domains N meths
@@ -55,7 +55,7 @@ func ServeRoutes(th *services.TokenHandler,uh *services.UserHandler,mw mw.UserMi
 		// @ Chaining router with mw calls to let them use it
 		r.Use(mw.Authenticate)
 		//! Protected Routes
-		r.Post("/users/register",uh.HandleRegisterUser)
+		r.Post("/users/register",usrHandlerIfaceStore.UserHandlerIface.HandleRegisterUser)
 		r.Post("/tokens/authentication",th.HandleCreateToken)
 		r.Get("/movies/all",mw.RequiresAuthorization(controllers.GetAllMovies))
 		r.Get("/movies/movie/{id}", mw.RequiresAuthorization(controllers.GetMovieByID)) //* urlParam is read when ending slug is in format of /{slug}
