@@ -1,5 +1,16 @@
+# Go
+*.o
+*.a
+*.so
+.DS_Store
+tmp/
+/bin/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Env
 .env
-GoMovieAPI
-curls.md
-temp
-db-notes.md
+.env.local
