@@ -5,6 +5,7 @@ export default function App() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingMovieID, setDeletingMovieID] = useState(null);
 
   useEffect(() => {
     async function loadData() {
@@ -33,18 +34,53 @@ export default function App() {
     loadData();
   }, []);
 
+  // whatever id is passing makes an req to delete req path
+  async function handleDelete(movieID) {
+    if (!movieID) {
+      setError("failed to delete the movie as movie id is missing!.");
+      return;
+    }
+    // if movie id is available
+    try {
+      setError("");
+      setDeletingMovieID(movieID);
+      const fetchReq = await fetch(`/api/movies/movie/delete/${movieID}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      let backendRes = "failed to delete the movie.";
+
+      // if fetch req on that url failed
+      if (!fetchReq.ok) {
+        try {
+          const res = await fetchReq.json();
+          backendRes = res?.status || backendRes;
+        } catch (err) {
+          throw new Error(
+            err instanceof Error ? err.message : "unexpected error occurred",
+          );
+        }
+        throw new Error(backendRes);
+      }
+      // setting Movies without this movie by filtering it out
+      setMovies((prevMovies) =>
+        prevMovies.filter((movie) => movie.id !== movieID),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "unexpected error occurred",
+      );
+    } finally {
+      setDeletingMovieID(null); // set to null to wipe stored id in state
+    }
+  }
+
   return (
     <div className="page">
-      <video
-        className="bg-video"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-      >
-        <source src="/netflix.mp4" type="video/mp4" />
-      </video>
+
       <div className="bg-overlay" aria-hidden="true" />
       <header className="hero">
         <h1>MoviesFlix 🎬</h1>
@@ -80,6 +116,14 @@ export default function App() {
                 <p>
                   Updated-At: <strong>{movie.updated_at ?? "-"}</strong>
                 </p>
+                <button
+                  onClick={() => handleDelete(movie.id)}
+                  className="delete-btn"
+                >
+                  {deletingMovieID === movie.id
+                    ? "deleting movie"
+                    : "Delete Movie"}
+                </button>
               </li>
             ))}
           </ul>

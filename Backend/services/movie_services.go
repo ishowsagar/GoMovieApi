@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -12,6 +13,10 @@ type MovieMethodStore interface {
 	GetMovieByID(id string)(*Movie,error)
 	DeleteMovieByID(id string) error
 	DeleteAllMovies() error
+	GetMovieByQueryParams(movieName string) (*Movie,error)
+	GetMoviesByGenreQP(genre string) ([]*Movie,error)
+	GetMoviesByRatingsQP(ratings uint) ([]*Movie,error)
+	GetMoviesBYLimit(genre string,limit uint8) ([]*Movie,error)
 }
 
 // @ type for movie api data struct
@@ -30,7 +35,7 @@ type Movie struct {
 func (m Movie) GetAllMovies()([]*Movie,error) {
 	// !querying requests with context for more flexible request with passed context
 	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
-	defer cancel()
+	cancel()
 
 	// * Accessing db from var Db which stores Db connection returned from supply Func
 	query := `
@@ -40,6 +45,7 @@ func (m Movie) GetAllMovies()([]*Movie,error) {
 	if err != nil {
 		return nil,err
 	}
+	defer MoviesRows.Close()
 
 	// var to store rows
 	var movies []*Movie
@@ -191,3 +197,158 @@ func (m Movie) DeleteAllMovies() error {
 	return nil
 }
 
+func(m Movie) GetMovieByQueryParams(movieName string) (*Movie,error) {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+
+	query := `
+		select id,name,genre,description,ratings,created_at,updated_at 
+		from
+			movies
+		where lower(name)=lower($1)
+	`
+
+	row := db.QueryRowContext(ctx,query,movieName)
+	var movie Movie
+	// scanning whatever res came from db call 
+	err := row.Scan(
+		&movie.ID,
+		&movie.Name,
+		&movie.Genre,
+		&movie.Description,
+		&movie.Ratings,
+		&movie.CreatedAt,
+		&movie.UpdatedAt,
+	)
+	if err != nil {
+		return nil,err
+	}
+	return &movie,nil
+}
+
+// get all movies with associated genre
+func (m Movie) GetMoviesByGenreQP(genre string) ([]*Movie,error) {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+
+	query := `
+		select id,name,genre,description,ratings,created_at,updated_at
+			from 
+				movies
+		where
+			lower(genre)=lower($1)
+	`
+
+	rows,err := db.QueryContext(ctx,query,genre)
+	if err != nil {
+		return nil,err
+	}
+	defer rows.Close()
+
+	// store resulted rows in type that would store [] of elements type *Movie
+	var movies []*Movie
+	for rows.Next() {
+		// for each row --> scanning into each row field
+		var movie Movie
+		rows.Scan(
+			&movie.ID,
+			&movie.Name,
+			&movie.Genre,
+			&movie.Description,
+			&movie.Ratings,
+			&movie.CreatedAt,
+			&movie.UpdatedAt,
+		)
+		// after scanning and when data population is successful
+		movies = append(movies, &movie) // appending movie to prev Movie slice of *Movie
+	}
+	return movies,nil
+}
+
+
+// get movies by ratings check like ratings more than >
+func (m Movie) GetMoviesByRatingsQP(ratings uint) ([]*Movie,error) {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+
+	query := `
+		select id,name,genre,description,ratings,created_at,updated_at
+			from 
+				movies
+		where
+			ratings > $1
+	`
+
+	rows,err := db.QueryContext(ctx,query,ratings)
+	if err != nil {
+		return nil,err
+	}
+	defer rows.Close()
+
+	// store resulted rows in type that would store [] of elements type *Movie
+	var movies []*Movie
+	for rows.Next() {
+		// for each row --> scanning into each row field
+		var movie Movie
+		rows.Scan(
+			&movie.ID,
+			&movie.Name,
+			&movie.Genre,
+			&movie.Description,
+			&movie.Ratings,
+			&movie.CreatedAt,
+			&movie.UpdatedAt,
+		)
+		// after scanning and when data population is successful
+		movies = append(movies, &movie) // appending movie to prev Movie slice of *Movie
+	}
+	return movies,nil
+}
+
+
+// func that gets movies with desired number of result
+func (m Movie) GetMoviesBYLimit(genre string,limitOffset uint8) ([]*Movie,error) {
+	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
+	defer cancel()
+
+	query := `
+		Select id,name,genre,description,ratings,created_at,updated_at
+			from 
+				movies
+		where
+			lower(genre)=lower($1)
+		limit $2
+	`
+
+	var movies []*Movie //result slice
+
+	rows,err := db.QueryContext(ctx,query,genre,limitOffset) //bug --> checking what happens if provided not all placeholders arg for query call
+	if err!= nil {
+		return nil,err
+	}
+	defer rows.Close() // cleanup rows after done fetching
+
+	for rows.Next() {
+		// creating movie inside the loop so everytime new type is used as addr for appending otherwise there would be duplicated results
+		var movie Movie // each el in slice would be 
+		err = rows.Scan(
+			&movie.ID,
+			&movie.Name,
+			&movie.Genre,
+			&movie.Description,
+			&movie.Ratings,
+			&movie.CreatedAt,
+			&movie.UpdatedAt,
+		)
+		if err != nil {
+			return nil,err
+		} 
+	movies = append(movies, &movie)
+	}
+
+	//  for sql.ErrNoRows we have to create that err, it is not created automatically to catch in actual err resp
+	if len(movies) == 0 {
+		return nil,sql.ErrNoRows
+	}
+	return movies,nil
+}
