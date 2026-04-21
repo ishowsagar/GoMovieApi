@@ -35,7 +35,7 @@ type Movie struct {
 func (m Movie) GetAllMovies()([]*Movie,error) {
 	// !querying requests with context for more flexible request with passed context
 	ctx,cancel := context.WithTimeout(context.Background(),dbContextTimeOutDuration)
-	cancel()
+	defer cancel()
 
 	// * Accessing db from var Db which stores Db connection returned from supply Func
 	query := `

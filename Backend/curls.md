@@ -134,16 +134,6 @@ PrepareContext(ctx, query)
 Use when same statement runs many times.
 Returns prepared statement, then stmt.QueryContext / stmt.ExecContext.
 
-Rows methods (after QueryContext):
-
-rows.Next()
-Moves cursor to next row.
-rows.Scan(&a, &b, ...)
-Reads current row into variables.
-rows.Close()
-Always defer close.
-rows.Err()
-Check after loop for iteration errors.
 
 # next step
 
@@ -157,100 +147,5 @@ Check after loop for iteration errors.
 3. Add route for the controller method and wire it up
    ⭐Remember ==> Don't forget to add method signature in the interface that stores all the method from type "Movie" that implements it
 
-# test curls
 
-Base URL:
-
-```bash
-BASE_URL="http://localhost:8080"
-```
-
-Health check:
-
-```bash
-curl -i "http://localhost:8080/health"
-```
-
-Register user:
-
-```bash
-curl -i -X POST "http://localhost:8080/api/users/register" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "username": "testuser1",
-        "password": "Pass@123",
-        "email": "testuser1@example.com",
-        "bio": "test profile"
-    }'
-```
-
-Create auth token (login):
-
-```bash
-curl -i -X POST "http://localhost:8080/api/tokens/authentication" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "username": "testuser1",
-        "password": "Pass@123"
-    }'
-```
-
-Wrong password (should be 401):
-
-```bash
-curl -i -X POST "http://localhost:8080/api/tokens/authentication" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "username": "testuser1",
-        "password": "wrongpass"
-    }'
-```
-
-Missing username (should be 400):
-
-```bash
-curl -i -X POST "http://localhost:8080/api/tokens/authentication" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "password": "Pass@123"
-    }'
-```
-
-Create movie:
-
-```bash
-curl -i -X POST "http://localhost:8080/api/movie/create" \
-    -H "Content-Type: application/json" \
-    -d '{
-        "name": "Marvel Avengers Endgame",
-        "genre": "Sci-fi",
-        "description": "Thanos has already destroyed planets, but the final battle remains.",
-        "ratings": 8.9
-    }'
-```
-
-Get all movies:
-
-```bash
-curl -i "http://localhost:8080/api/movies/all"
-```
-
-## Bulk create movies (100 requests, categorized by genre)
-
-Run from the Backend folder:
-
-```bash
-bash curls_100_movies.sh
-```
-
-If movie create is protected by auth middleware, pass token:
-
-```bash
-TOKEN="your_token_here" bash curls_100_movies.sh
-```
-
-Optional custom API base URL:
-
-```bash
-BASE_URL="http://localhost:8080" TOKEN="your_token_here" bash curls_100_movies.sh
 ```

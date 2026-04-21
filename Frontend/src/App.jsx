@@ -1,38 +1,24 @@
-import { useEffect, useState } from "react";
-
+import { Link } from "react-router-dom";
+import { useMovies } from "./context/MoviesContext";
+import { clearStoredToken, getAuthHeader, isAuthenticated } from "./utils/auth";
 export default function App() {
-  const [health, setHealth] = useState("Checking backend...");
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [deletingMovieID, setDeletingMovieID] = useState(null);
+  const {
+    health,
+    movies,
+    loading,
+    error,
+    setError,
+    setMovies,
+    deletingMovieID,
+    setDeletingMovieID,
+  } = useMovies();
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [healthRes, moviesRes] = await Promise.all([
-          fetch("/health"),
-          fetch("/api/movies/all"),
-        ]);
+  const loggedIn = isAuthenticated();
 
-        const healthText = await healthRes.text();
-        setHealth(healthText || "Backend reachable.");
-
-        if (!moviesRes.ok) {
-          throw new Error("Failed to load movies from API.");
-        }
-
-        const moviesData = await moviesRes.json();
-        setMovies(moviesData?.data ?? []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unexpected error");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
+  function handleLogout() {
+    clearStoredToken();
+    setError("");
+  }
 
   // whatever id is passing makes an req to delete req path
   async function handleDelete(movieID) {
@@ -48,6 +34,7 @@ export default function App() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeader(),
         },
       });
 
@@ -80,14 +67,55 @@ export default function App() {
 
   return (
     <div className="page">
-
       <div className="bg-overlay" aria-hidden="true" />
       <header className="hero">
         <h1>MoviesFlix 🎬</h1>
         {error && <p>{health}</p>}
       </header>
 
-      <main className="content">
+      <main className="form">
+        <div className="form-div">
+          <nav>
+            <ul className="form-div-ul">
+              <li>
+                <Link to="/" className="form-div-ul-a">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link to="/discover-movies" className="form-div-ul-a">
+                  Discover
+                </Link>
+              </li>
+              <li>
+                <Link to="/create-movie" className="form-div-ul-a">
+                  Create
+                </Link>
+              </li>
+              <li>
+                <Link to="/login" className="form-div-ul-a">
+                  Login
+                </Link>
+              </li>
+              {loggedIn && (
+                <li>
+                  <button
+                    type="button"
+                    className="form-div-ul-a"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </li>
+              )}
+              <li>
+                <Link to="/signup" className="form-div-ul-a">
+                  Signup
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
         <h2>Available movies</h2>
         {loading && <p>Loading movies...</p>}
         {error && <p className="error">{error}</p>}
