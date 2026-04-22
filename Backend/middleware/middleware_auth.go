@@ -36,7 +36,7 @@ func GetUser(r *http.Request) *store.User {
 	return user
 }
 
-// this func would authenticate incoming req & if it does --> calls the next fnc 
+// this func would authenticate incoming req by attaching token on the req with context & if it does --> calls the next fnc 
 func (usrmw *UserMiddleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
 

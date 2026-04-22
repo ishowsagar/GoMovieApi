@@ -39,9 +39,9 @@ build :
 	go build -o ${BINARY} cmd/server/main.go
 	@echo "binary created in root✅✅"
 
-run : 
-	@echo "movies api has started🚀🚀..."
+run : build
 	./${BINARY}
+	@echo "movies api has started🚀🚀..."
 
 stop : 
 	@echo "stopping whole backend server❌❌..."

@@ -25,7 +25,7 @@ func ConnectToPostgresDB(connectionString string) (*Db,error) {
 	// open connection - returns db & err
 	db,err := sql.Open("pgx",connectionString)
 	if err !=nil {
-		fmt.Printf("failed to open database connection :%s",err)
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
 	// * configuring Db connection we have got from above func

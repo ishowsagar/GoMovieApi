@@ -4,7 +4,6 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,7 +22,7 @@ type MovieMethodStore struct {
 	Store services.MovieMethodStore
 }
 //  func that returns instance of type that holds interface passin in type that implements it
-func NewMovieMethodStore(movieInterfaceImplemenationType services.MovieMethodStore) MovieMethodStore {
+func NewMovieMethodStore(movieInterfaceImplemenationType services.Movie) MovieMethodStore {
 	return MovieMethodStore{
 		Store: movieInterfaceImplemenationType,
 	}
@@ -35,9 +34,8 @@ func (m MovieMethodStore) GetAllMovies(w http.ResponseWriter,r *http.Request)  {
 	// RetrievedMovies,err := MovieStore.Movie.GetAllMovies() - * before
 	RetrievedMovies,err := m.Store.GetAllMovies()
 	if err != nil {
-		fmt.Printf("failed to get all movies,Please try again later")
-		w.WriteHeader(http.StatusBadRequest)
-		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"failed to get all movies."})
+		log.Printf("failed to get all movies: %v", err)
+		utils.WriteJson(w,http.StatusInternalServerError,utils.Envelop{"status":"failed to get all movies."})
 		return
 	}
 
@@ -171,7 +169,7 @@ func (m MovieMethodStore) DeleteAllMovies(w http.ResponseWriter,r *http.Request)
 
 	err := m.Store.DeleteAllMovies()
 	if err != nil {
-		log.Fatalf("failed to delete all movies - %s",err)
+		log.Printf("failed to delete all movies - %s",err)
 		utils.WriteJson(w,http.StatusBadRequest,utils.Envelop{"status":"failed to delete all movies, unexpected error occured"})
 		return
 	}
@@ -275,3 +273,4 @@ func (m MovieMethodStore) GetMoviesByLimit(w http.ResponseWriter,r *http.Request
 
 	utils.WriteJson(w,http.StatusOK,utils.Envelop{"movies":retrievedMovies})
 }
+

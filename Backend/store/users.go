@@ -17,7 +17,7 @@ type Password struct {
 }
 
 
-// funcs that belongs to this type --> Password struct
+// funcs that belongs to this type --> Password struct stores plainPass n generated hash on it
 func (p *Password) SetUser(plainTextPasswordString string) error {
 
 	// need to return instance of &Password by setting hash and PlainText recieved from payload
